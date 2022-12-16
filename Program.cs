@@ -75,17 +75,23 @@ namespace CSharpUserOperandApplication2
             // Object number from which to evaluate material index
             int object_number = (int)Hx;
 
-            // Wave number at which to evaluate material index
-            int wave_number = (int)Hy;
+            // Number of wavelengths
+            int number_of_wavelengths = TheSystem.SystemData.Wavelengths.NumberOfWavelengths;
 
-            // Actual wavelength
-            double wavelength = TheSystem.SystemData.Wavelengths.GetWavelength(wave_number).Wavelength;
-
-            // Wavelength squared
-            double wavel_squared = wavelength * wavelength;
+            // Array of wavelengths
+            double[] wavelengths = new double[number_of_wavelengths];
+            double wavel_squared = 0;
+            
+            for (int ii = 0; ii < number_of_wavelengths; ii++)
+            {
+                wavelengths[ii] = TheSystem.SystemData.Wavelengths.GetWavelength(ii+1).Wavelength;
+            }
+            
+            // Initialize array of refractive indices
+            double[] indices = new double[number_of_wavelengths];
 
             // Catalog number (following look-up "switch" below, e.g. 1 = Schott)
-            int catalog_number = (int)Px;
+            int catalog_number = (int)Hy;
 
             // Catalog look-up
             string catalog = "";
@@ -111,9 +117,6 @@ namespace CSharpUserOperandApplication2
             // Run Materials Catalog
             material_cat.RunAndWaitForCompletion();
 
-            // Initialize dummy refractive index value
-            double refractive_index = -1.0;
-
             // Look-up index formula
             switch (material_cat.MaterialFormula)
             {
@@ -131,12 +134,16 @@ namespace CSharpUserOperandApplication2
                     L3 = material_cat.GetFitCoefficient(5);
 
                     // Refractive index calculation
-                    refractive_index = K1 / (wavel_squared - L1);
-                    refractive_index += K2 / (wavel_squared - L2);
-                    refractive_index += K3 / (wavel_squared - L3);
-                    refractive_index *= wavel_squared;
-                    refractive_index += 1.0;
-                    refractive_index = Math.Sqrt(refractive_index);
+                    for (int ii = 0; ii < number_of_wavelengths; ii++)
+                    {
+                        wavel_squared = wavelengths[ii] * wavelengths[ii];
+                        indices[ii] = K1 / (wavel_squared - L1);
+                        indices[ii] += K2 / (wavel_squared - L2);
+                        indices[ii] += K3 / (wavel_squared - L3);
+                        indices[ii] *= wavel_squared;
+                        indices[ii] += 1.0;
+                        indices[ii] = Math.Sqrt(indices[ii]);
+                    }
 
                     break;
                 // Add other formulas here
@@ -146,8 +153,12 @@ namespace CSharpUserOperandApplication2
             // Close Materials Catalog
             material_cat.Close();
 
-            operandResults[0] = refractive_index;
-
+            // Return indices
+            for (int ii = 0; ii < number_of_wavelengths; ii++)
+            {
+                operandResults[ii] = indices[ii];
+            }
+            
             // Clean up
             FinishUserOperand(TheApplication, operandResults);
         }
