@@ -100,6 +100,9 @@ namespace CSharpUserOperandApplication2
                 case 1:
                     catalog = "Schott";
                     break;
+                case 2:
+                    catalog = "MISC";
+                    break;
                 // Add other catalogs here
                 // ...
             }
@@ -142,6 +145,30 @@ namespace CSharpUserOperandApplication2
                         indices[ii] += K3 / (wavel_squared - L3);
                         indices[ii] *= wavel_squared;
                         indices[ii] += 1.0;
+                        indices[ii] = Math.Sqrt(indices[ii]);
+                    }
+
+                    break;
+                case MaterialFormulas.Schott:
+                    // Initialize fit coefficients
+                    double a0, a1, a2, a3, a4, a5;
+
+                    // Get fit coefficients
+                    a0 = material_cat.GetFitCoefficient(0);
+                    a1 = material_cat.GetFitCoefficient(1);
+                    a2 = material_cat.GetFitCoefficient(2);
+                    a3 = material_cat.GetFitCoefficient(3);
+                    a4 = material_cat.GetFitCoefficient(4);
+                    a5 = material_cat.GetFitCoefficient(5);
+
+                    // Refractive index calculation
+                    for (int ii = 0; ii < number_of_wavelengths; ii++)
+                    {
+                        indices[ii] = a0 + a1 * Math.Pow(wavelengths[ii], 2);
+                        indices[ii] += a2 * Math.Pow(wavelengths[ii], -2);
+                        indices[ii] += a3 * Math.Pow(wavelengths[ii], -4);
+                        indices[ii] += a4 * Math.Pow(wavelengths[ii], -6);
+                        indices[ii] += a5 * Math.Pow(wavelengths[ii], -8);
                         indices[ii] = Math.Sqrt(indices[ii]);
                     }
 
